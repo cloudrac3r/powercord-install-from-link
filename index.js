@@ -25,7 +25,6 @@ module.exports = class InstallFromLink extends Plugin {
 
 		const _this = this
 		inject("install-from-link-messageContext", MessageContextMenu.prototype, "render", function(_, res) {
-			console.log(this)
 			const {target} = this.props;
 			if (target.tagName.toLowerCase() === "a") {
 				const href = target.href
@@ -51,31 +50,43 @@ module.exports = class InstallFromLink extends Plugin {
 							seperate: true,
 							onClick: () => {
 								const pluginsDir = pj(__dirname, "..")
-								const c = spawn("git", ["clone", link], {
-									cwd: pluginsDir,
-									windowsHide: true
-								})
-								let status = "Hmm, looks like the plugin wasn't installed. You can check the devtools console for more info." // generic failure message
+								let status
+								let c
+								try {
+									c = spawn("git", ["clone", link], {
+										cwd: pluginsDir,
+										windowsHide: true
+									})
+								} catch (e) { // spawn failed
+									return announce("Couldn't start the installer. Do you have git installed?")
+								}
 								c.stdout.on("data", data => console.log(data.toString()))
 								c.stderr.on("data", data => {
 									data = data.toString()
 									console.error(data)
 									if (data.includes("already exists")) status = "You already have that plugin installed. The existing installation was not affected."
 								})
-								c.on("exit", code => {
+								c.on("exit", async code => {
 									if (code === 0) {
+										let files
 										try {
-											const files = fs.readdirSync(pj(pluginsDir, repoName))
-											if (files.includes("manifest.json")) {
-												announce("The plugin was installed successfully! Press Ctrl-R to reload Discord to use it.")
-											} else {
-												announce("That repo is not a Powercord plugin. It's been cloned anyway, but don't expect it to do anything.")
-											}
+											files = fs.readdirSync(pj(pluginsDir, repoName))
 										} catch (e) { // readdirSync failed
-											announce(status) // just do this for now I guess
+											return announce(`Cloning apparently succeeded, but the resulting installation folder was nowhere to be found. (Looking for ${pj(pluginsDir, repoName)})`) // just do this for now I guess
+										}
+										if (files.includes("manifest.json")) {
+											await powercord.pluginManager.remount(repoName)
+											if (powercord.pluginManager.plugins.has(repoName)) {
+												announce("The plugin was installed and loaded successfully!")
+											} else { // remount mysteriously failed
+												announce("The plugin was installed, but you'll need to press Ctrl-R to reload Discord before you can use it.")
+											}
+										} else { // no manifest
+											announce("That repo is not a Powercord plugin. It's been cloned anyway, but don't expect it to do anything.")
 										}
 									} else { // non-zero exit code
-										announce(status)
+										if (status) announce(status)
+										else announce(`The command mysteriously exited with a non-zero status code (${code}). Do y`)
 									}
 								})
 							}
