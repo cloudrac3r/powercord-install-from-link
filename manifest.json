@@ -1,0 +1,8 @@
+{
+	"name": "Install From Link",
+	"version": "1.0.0",
+	"description": "Right click a GitHub plugin link to install it.",
+	"author": "Cadence#3263",
+	"license": "AGPL-3.0",
+	"optionalDependencies": ["pc-emojiUtility", "powercord-reverse-image-search"]
+}
