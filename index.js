@@ -27,7 +27,7 @@ module.exports = class InstallFromLink extends Plugin {
 			const {target} = this.props;
 			if (target.tagName.toLowerCase() === "a") {
 				const href = target.href
-				let match = href.match(/^https?:\/\/(www.)?(github||gitlab).com\/[\w-]+\/[\w-]+/)
+				let match = href.match(/^https?:\/\/(www.)?git(hub|lab).com\/[\w-]+\/[\w-]+/)
 				if (match) {
 					const link = match[0]
 					const repoName = link.match(/[\w-]+$/)[0]
@@ -71,7 +71,7 @@ module.exports = class InstallFromLink extends Plugin {
 										try {
 											files = fs.readdirSync(pj(pluginsDir, repoName))
 										} catch (e) { // readdirSync failed
-											return announce(`Cloning apparently succeeded, but the resulting installation folder was nowhere to be found. (Looking for ${pj(pluginsDir, repoName)})`, "yellow") // just do this for now I guess
+											return announce(`Cloning apparently succeeded, but the resulting installation folder was nowhere to be found. (Looking for ${pj(pluginsDir, repoName)})`, "red") // just do this for now I guess
 										}
 										if (files.includes("manifest.json")) {
 											await powercord.pluginManager.remount(repoName)
@@ -85,7 +85,7 @@ module.exports = class InstallFromLink extends Plugin {
 										}
 									} else { // non-zero exit code
 										if (status) announce(status, "red")
-										else announce(`The command mysteriously exited with a non-zero status code (${code}). Do y`, "red")
+										else announce(`The command mysteriously exited with a non-zero status code (${code}).`, "red")
 									}
 								})
 							}
