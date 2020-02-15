@@ -22,7 +22,7 @@ module.exports = class InstallFromLink extends Plugin {
 		const NativeLinkGroup = await getModule(m => m.default && m.default.displayName == "NativeLinkGroup")
 
 		inject("install-from-link-linkGroup", NativeLinkGroup, "default", function(args, res) {
-			let match = args[0].href.match(/^https?:\/\/(www.)?git(hub|lab).com\/[\w-]+\/[\w-]+/)
+			let match = args[0].href ? args[0].href.match(/^https?:\/\/(www.)?git(hub|lab).com\/[\w-]+\/[\w-]+/) : false
 			if (match) {
 				const link = match[0]
 				const repoName = link.match(/[\w-]+$/)[0]
